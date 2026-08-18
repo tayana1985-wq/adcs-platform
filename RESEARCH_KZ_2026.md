@@ -543,3 +543,66 @@ ADCS конкурирует не со спортивными организац�
 6. Экран совместимости (SRS, спартакиада, ДМС, интранет, профсоюз).
 7. **Экран «Что ADCS не обещает».**
 8. Сноски с источниками под каждой цифрой.
+
+---
+
+## 12. Источники
+
+**Официальная статистика РК**
+1. Бюро национальной статистики РК. Ситуация на рынке труда (2025 г.) — https://stat.gov.kz/ru/industries/labor-and-income/stat-empt-unempl/publications/480212/
+2. Бюро национальной статистики РК. Ситуация на рынке труда, I кв. 2026 — https://stat.gov.kz/ru/industries/labor-and-income/stat-empt-unempl/publications/346496/
+3. Концепция развития физической культуры и спорта РК на 2023–2029 годы — https://adilet.zan.kz/rus/docs/P2300000251
+
+**Рынок труда и текучесть**
+4. EY Kazakhstan. Рынок труда Казахстана 2025: адаптироваться нельзя игнорировать (18-й ежегодный Обзор заработных плат и компенсаций 2024/2025) — https://www.ey.com/ru_kz/insights/workforce/ey-hr-club/labor-market-of-kazakhstan-2025
+5. EnergyProm. Текучесть кадров в Казахстане: почему уходит каждый пятый? — https://energyprom.kz/articles-ru/society-ru/tekuchest-kadrov-v-kazahstane-pochemu-uhodit-kazhdyj-pyatyj/
+6. hh.kz. Рынок труда в Казахстане: итоги I квартала 2026 года — https://hh.kz/article/34296
+7. Liter.kz. Как изменился рынок труда: главные тренды весны 2026 года в Казахстане — https://liter.kz/kak-izmenilsia-rynok-truda-glavnye-trendy-vesny-2026-goda-v-kazakhstane-1776748037/
+8. Inbusiness.kz. Дефицит технических кадров в Казахстане — https://inbusiness.kz/ru/last/deficit-tehnicheskih-kadrov-v-kazahstane-dostigaet-900-tys-chelovek
+9. LS. Дефицит кадров в Казахстане через несколько лет превысит 1,5 млн человек — https://lsm.kz/kazahstan-sil-no-nuzhdaetsya-v-kadrah
+
+**HR-тренды и обучение**
+10. EY Kazakhstan. HR-тренды 2026: от операционного HR к стратегическому управлению рабочей силой *(значительная часть цифр — глобальные исследования)* — https://www.ey.com/ru_kz/insights/workforce/ey-hr-club/hr-trends-2026-strategic-workforce-transformation
+
+**Социальная стабильность**
+11. АО «Самрук-Қазына». Обеспечение социальной стабильности. Отчёт об устойчивом развитии 2024 — https://sk.kz/our2024/ru/download/ensuring-social-stability.pdf
+12. АО «Самрук-Қазына». Центр социального взаимодействия и коммуникаций — https://sk.kz/ar2024/ru/center-for-social-cooperation-and-communications.html
+13. SK News. Индекс Samruk Research Services: социальная стабильность как фактор успешности — https://sknews.kz/news/view/isatay-minuarov-socialynaya-stabilynosty---eto-faktor-uspeshnosti
+14. Kursiv Media. S как стабильность (ERG ~120 тыс., «Казахмыс» ~37 тыс., KPI топ-менеджмента) — https://kz.kursiv.media/2025-10-23/s-kak-stabilnost/
+
+**Молодёжь, удержание, эмиграция**
+15. ANCOR / Forbes Kazakhstan. Почему зумеры не держатся за работу: исследование The Talentist 2025 (1700+ респондентов) — https://ancor.kz/press/media/forbes-kazakhstan-pochemu-zumery-ne-derzhatsya-za-rabotu/
+16. Tengrinews. Поколение Z и рынок труда Казахстана — https://tengrinews.kz/article/lenivye-prorabotannye-zumery-meniaiut-rabotodatelei-rynok-4025/
+17. BusinessFM.kz. «Утечка мозгов»: Казахстан ещё не компенсировал потери квалифицированных кадров — https://businessfm.kz/business/utechka-mozgov-kazahstan-eshyo-ne-kompensiroval-poteri-kvalificirovannyh-kadrov
+
+**Здоровье, выгорание, спорт**
+18. Tengrinews / Минздрав РК. Причины смертности в Казахстане в 2025 году — https://tengrinews.kz/tengri-health/otravleniy-opuholi-minzdrave-nazvali-samyie-chastyie-596000/
+19. Ulysmedia. STADA Health Report 2025: казахстанцы выгорают чаще других в мире (75% против 63%) — https://ulysmedia.kz/news/54143-kazakhstantsy-vygoraiut-chashche-drugikh-liudei-v-mire-stress-na-rabote-tolkaet-stranu-k-psikhoemotsionalnomu-krizisu/
+20. Bluescreen.kz. Ментальное здоровье сотрудников: готовы ли работодатели Казахстана к открытому диалогу — https://bluescreen.kz/mientalnoie-zdorovie-sotrudnikov-ghotovy-li-rabotodatieli-kazakhstana-k-otkrytomu-dialoghu/
+21. Bizmedia.kz. Более 41% казахстанцев систематически занимаются спортом — https://bizmedia.kz/2025-07-31-bolee-41-kazahstanczev-sistematicheski-zanimayutsya-sportom/
+22. Inbusiness.kz. Почти половина казахстанцев регулярно занимается спортом, но спортивной инфраструктуры не хватает — https://inbusiness.kz/ru/last/obem-sportivnykh-uslug-v-kazakhstane-vyros-bolee-chem-na-11-za-god-405987
+23. Ranking.kz. Что мешает казахстанцам заниматься спортом (барьеры, инфраструктура) — https://ranking.kz/reviews/industries/lish-39-kazahstantsev-zanimayutsya-sportom-chto-meshaet-ostalnym.html
+
+**Производительность труда**
+24. Halyk Finance. Производительность труда в Казахстане: вызовы и перспективы роста — https://halykfinance.kz/download/files/analytics/labor_092025.pdf
+25. Kapital.kz. Производительность труда растёт, но покупательская способность падает — https://kapital.kz/economic/148225/proizvoditelnost-truda-rastet-no-pokupatelskaya-sposobnost-kazahstancev-padaet.html
+
+**Бренд работодателя**
+26. Kapital.kz. Названы самые привлекательные работодатели в Казахстане (Randstad Employer Brand Research / Kantar / ANCOR) — https://kapital.kz/gosudarstvo/95287/nazvany-samyye-privlekatel-nyye-rabotodateli-v-kazakhstane.html
+27. DigitalBusiness.kz. В Казахстане назвали лучшего работодателя в 2025 году (ProHunters, 2703 респондента) — https://digitalbusiness.kz/2025-12-10/v-kazahstane-nazvali-luchshego-rabotodatelya-v-2025-godu-reyting-kompaniy/
+28. ANCOR Kazakhstan. Randstad Employer Brand Research — https://ancor.kz/en/rebr/
+
+**Внутренние коммуникации**
+29. PR Drive. Проблемы и перспективы внутренних коммуникаций в Казахстане (исследование «Внутриком School», 28 компаний) — https://prdrive.kz/page30300495.html
+
+**Корпоративный спорт в РК**
+30. КазМунайГаз. Спартакиада группы компаний — https://www.kmg.kz/ru/press-center/press-releases/spart/
+31. Казатомпром. XXIV Спартакиада среди работников и ДЗО — https://spartakiada.kazatomprom.kz/
+32. Sport Projects. Организация корпоративных спортивных мероприятий (500+ мероприятий с 2015) — https://sport-projects.kz/
+
+**IT и отраслевые данные**
+33. Bluescreen.kz. Какие компании выбирают IT-специалисты в 2026 году — https://bluescreen.kz/kakiie-kompanii-vybiraiut-it-spietsialisty-v-2026-ghodu/
+34. Taylor.kz. IT-рынок Казахстана: апрель 2026 — https://taylor.kz/blog/it-rynok-kazaxstana-aprel-2026-polnyi-obzor-i-trendy
+
+**Проверка международного контура (отрицательный результат)**
+35. Astana Times / Qazinform / Inside the Games: подтверждены Games of the Future 2026 и World Esports Championship 2027 в Астане. Публичного подтверждения World Corporate Games Kazakhstan 2027 в открытых источниках **не обнаружено**.
