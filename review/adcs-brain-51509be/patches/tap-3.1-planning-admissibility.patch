@@ -1,0 +1,127 @@
+--- a/src/Analytics/TieAwarePower3.php
++++ b/src/Analytics/TieAwarePower3.php
+@@ -61,6 +61,63 @@
+     public const IDENTIFICATION_STATUS =
+         'PLANNING_ASSUMPTION_NOT_EMPIRICALLY_IDENTIFIED_FOR_NEW_WORDING';
+ 
++    /* ============ ДВА ОТКАЗА, КОТОРЫХ НЕ БЫЛО ДО tap-3.1 ============
++     *
++     * СОГЛАСИЕ ЧЕТЫРЁХ КОНСТРУКЦИЙ НЕ ЕСТЬ ПРИГОДНОСТЬ ПЛАНА. Все четыре
++     * настраиваются на ОДИН наблюдаемый Спирмен, поэтому при вырожденных долях
++     * они уезжают к краю ВМЕСТЕ и сходятся теснее, чем при здоровых. Проверка
++     * расхождения смотрит на форму связи и величину её не видит.
++     *
++     * НАТЯЖЕНИЕ — доля потолка, которую материальность занимает при данной паре
++     * маргиналов: strain = rho_цель / rho_потолок, где потолок есть Спирмен
++     * комонотонной сцепки тех же долей. При strain → 1 моделируемая альтернатива
++     * есть почти полное упорядочение: она возможна, но планом не является, и
++     * требуемое N в этой точке падает не потому, что проверка дешевеет, а
++     * потому, что альтернатива почти детерминирована.
++     *
++     * НЕВЫПОЛНИМОСТЬ — доля повторений, в которых у одной из сторон нет разброса
++     * и Спирмена не существует. Она уже считалась (not_executable_share) и уже
++     * держала потолок мощности, но ни на что не влияла.
++     *
++     * ОБА ПОРОГА — ОБЪЯВЛЕННЫЕ ЧИСЛА, А НЕ ВЫВЕДЕННЫЕ. Утверждению человеком они
++     * не подвергались: статус THRESHOLD_DECLARED_NOT_APPROVED. Механизм отказа
++     * работает независимо от того, какие значения будут утверждены.
++     */
++    public const MAX_ASSOCIATION_STRAIN    = 0.60;
++    public const MAX_NOT_EXECUTABLE_SHARE  = 0.02;
++    public const THRESHOLD_STATUS          = 'THRESHOLD_DECLARED_NOT_APPROVED';
++
++    public const ADMISSIBLE            = 'PLANNING_N_ADMISSIBLE';
++    public const REFUSED_STRAIN        = 'PLANNING_N_REFUSED_ASSOCIATION_NEAR_EXTREMAL';
++    public const REFUSED_NOT_EXECUTABLE= 'PLANNING_N_REFUSED_TEST_OFTEN_NOT_EXECUTABLE';
++
++    /**
++     * Пригодно ли найденное N как ЧИСЛО ПЛАНА. Отказ не отменяет расчёт и не
++     * правит его: он запрещает выдавать результат как требуемую численность.
++     *
++     * @return array{verdict:string, strain:float, not_executable_share:float,
++     *               reasons:list<string>, thresholds:array<string,float>}
++     */
++    public static function admissibility(float $strain, float $notExecutableShare): array
++    {
++        $reasons = [];
++        if ($strain > self::MAX_ASSOCIATION_STRAIN)             { $reasons[] = self::REFUSED_STRAIN; }
++        if ($notExecutableShare > self::MAX_NOT_EXECUTABLE_SHARE) { $reasons[] = self::REFUSED_NOT_EXECUTABLE; }
++        return ['verdict' => $reasons === [] ? self::ADMISSIBLE : $reasons[0],
++                'strain' => $strain,
++                'not_executable_share' => $notExecutableShare,
++                'reasons' => $reasons,
++                'threshold_status' => self::THRESHOLD_STATUS,
++                'thresholds' => ['max_association_strain' => self::MAX_ASSOCIATION_STRAIN,
++                                 'max_not_executable_share' => self::MAX_NOT_EXECUTABLE_SHARE]];
++    }
++
++    /** Потолок Спирмена при данной паре долей: комонотонная сцепка. */
++    public static function ceilingRho(array $sx, array $sy): float
++    {
++        return self::rhoOfProb(self::comonotone($sx, $sy));
++    }
++
+     private int $state = 1;
+ 
+     public function __construct(private int $baseSeed) {}
+@@ -190,10 +247,17 @@
+      */
+     public function cellsFor(string $model, array $sx, array $sy, float $target): ?array
+     {
+-        $mk = function (array $p, float $param, string $name, string $constr) use ($sx, $sy) {
++        $ceiling = self::ceilingRho($sx, $sy);
++        $mk = function (array $p, float $param, string $name, string $constr)
++                use ($sx, $sy, $target, $ceiling) {
+             return ['cells' => $p, 'param' => $param, 'param_name' => $name,
+                     'rho' => self::rhoOfProb($p),
+                     'marginal_error' => self::marginalError($p, $sx, $sy),
++                    // ПОТОЛОК И НАТЯЖЕНИЕ. Потолок принадлежит ПАРЕ долей, а не
++                    // одному пункту: у той же шкалы с другой второй стороной он
++                    // другой. Поэтому он считается здесь, где известны обе.
++                    'ceiling_rho' => $ceiling,
++                    'strain' => $ceiling > 0.0 ? $target / $ceiling : INF,
+                     'construction' => $constr];
+         };
+ 
+@@ -369,7 +433,7 @@
+      * договора о точности.
+      */
+     public function requiredN(array $cells, float $alpha, float $desired, int $reps,
+-                              string $scenario, int $family): array
++                              string $scenario, int $family, ?float $strain = null): array
+     {
+         $coarse = [120, 180, 240, 300, 360, 440, 520, 620, 740, 880, 1050, 1250,
+                    1500, 1800, 2200];
+@@ -386,7 +450,8 @@
+         if ($hi === null) {
+             return ['n_certified' => null, 'n_point' => null, 'power' => null,
+                     'ci' => null, 'precision' => 'POWER_TARGET_NOT_REACHED_IN_RANGE',
+-                    'trace' => $trace, 'acct' => null, 'ceiling' => $ceiling];
++                    'trace' => $trace, 'acct' => null, 'ceiling' => $ceiling,
++                    'admissibility' => self::admissibility($strain ?? 0.0, 0.0)];
+         }
+         $lo ??= 40;
+ 
+@@ -444,9 +509,21 @@
+                 : 'POWER_TARGET_NOT_REACHED_AT_THIS_N');
+         $use = $certRes ?? $pointRes ?? $fin;
+ 
++        // ПРИГОДНОСТЬ ПРОВЕРЯЕТСЯ ЗДЕСЬ, А НЕ У ЗВОНЯЩЕГО. Натяжение приходит из
++        // cellsFor вместе с клетками; доля невыполнимых повторений берётся у той
++        // пробы, из которой взято выдаваемое N, а не у произвольной.
++        $adm = self::admissibility($strain ?? 0.0, (float) $use['not_executable_share']);
++        if ($adm['reasons'] !== []) { $precision = $adm['verdict']; }
++
+         return ['n_certified' => $nCert, 'n_point' => $nPoint,
+                 'power' => $use['p'], 'ci' => [$use['lo'], $use['hi']],
+                 'precision' => $precision, 'trace' => $trace, 'acct' => $use,
+-                'ceiling' => $use['power_ceiling']];
++                'ceiling' => $use['power_ceiling'],
++                'not_executable_share' => $use['not_executable_share'],
++                'admissibility' => $adm,
++                // ЧИСЛО ПЛАНА ВЫДАЁТСЯ ТОЛЬКО ПРИ ПРИГОДНОСТИ. Сам расчёт остаётся
++                // в n_certified / n_point и не стирается: отказ говорит, что его
++                // нельзя использовать как требуемую численность, а не что его нет.
++                'planning_n' => $adm['reasons'] === [] ? $nCert : null];
+     }
+ }
