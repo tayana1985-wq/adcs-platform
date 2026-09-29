@@ -336,6 +336,7 @@ footer.site{border-top:1px solid var(--line);padding:26px 0;background:var(--sof
 .fgrid .fs{font-size:11px;color:var(--muted);letter-spacing:.05em}
 @media(min-width:720px){.fgrid .fs.push{margin-left:auto}}
 
+.calc-local{color:var(--partial);border:1px dashed var(--partial);border-radius:8px;padding:8px 10px;background:var(--partial-bg)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 </head>
@@ -368,7 +369,7 @@ footer.site{border-top:1px solid var(--line);padding:26px 0;background:var(--sof
     </div>
   </div>
   <div class="demo-banner">
-    <div class="wrap">ДЕМО-ПРОЕКЦИЯ · данные в этой сборке — фикстура API, а не подтверждённые факты о реальных компаниях</div>
+    <div class="wrap"><span id="dataSource">ДЕМО-ПРОЕКЦИЯ · данные в этой сборке — фикстура API, а не подтверждённые факты о реальных компаниях</span></div>
   </div>
 </header>
 
@@ -602,10 +603,9 @@ footer.site{border-top:1px solid var(--line);padding:26px 0;background:var(--sof
     </div>
 
     <p class="note" style="margin-top:14px">
-      Расчёт выполняет backend. В этой сборке его заменяет изолированный модуль <code>KCSL_BACKEND_SURROGATE</code> —
-      единственная точка, которую разработчик меняет на <code>fetch(API_BASE + '/companies/{id}/calculators')</code>.
       Слой отображения не считает ничего.
     </p>
+    <p class="note" id="calcSource" style="margin-top:6px"></p>
   </div>
 </section>
 
@@ -793,7 +793,12 @@ footer.site{border-top:1px solid var(--line);padding:26px 0;background:var(--sof
    API_BASE = null включает демо-фикстуру. Проставьте адрес — и адаптер уйдёт
    в сеть, а разметка не изменится ни на строку.
    ========================================================================== */
-var API_BASE = null;
+/* Страница открыта с сервера KCSL → берём живую проекцию API.
+   Открыта как файл (file://) → работает на встроенной фикстуре.
+   Разметка в обоих случаях одна и та же. */
+var API_BASE = /^https?:$/.test(location.protocol) ? location.origin : null;
+var API_V    = "?version=8";
+var LIVE     = false;   /* стало ли известно, что данные пришли из API */
 
 var PROJECTION = {
   release: {
@@ -1259,11 +1264,99 @@ var KCSL_BACKEND_SURROGATE = (function(){
 })();
 
 /* ============================================================================
+   2b. АДАПТЕР ДАННЫХ
+   Приводит ответы API к той же форме, которую рисует слой отображения.
+   Это и есть «data adapter» из порядка сборки: Front consumes the backbone.
+   ========================================================================== */
+function apiGet(path){
+  return fetch(API_BASE + path + API_V, { headers:{ "X-KCSL-API-Version":"8" } })
+    .then(function(r){ if(!r.ok) throw new Error(path + " → " + r.status); return r.json(); })
+    .then(function(j){ return j.data; });
+}
+
+function loadFromApi(){
+  return Promise.all([ apiGet("/companies"), apiGet("/live"), apiGet("/cases"), apiGet("/releases/current") ])
+    .then(function(res){
+      var list = res[0], feed = res[1], cases = res[2], rel = res[3];
+      return Promise.all(list.map(function(c){
+        return Promise.all([
+          apiGet("/companies/" + c.company_id),
+          apiGet("/companies/" + c.company_id + "/achievements"),
+          apiGet("/companies/" + c.company_id + "/calculators"),
+          apiGet("/companies/" + c.company_id + "/participation")
+        ]).then(function(parts){
+          var pass = parts[0], ach = parts[1], cl = parts[2], part = parts[3];
+          var blocks = {};
+          Object.keys(pass.blocks || {}).forEach(function(b){
+            var x = pass.blocks[b];
+            blocks[b] = { coverage:x.coverage_status, stage:x.positive_stage,
+                          contour:x.sport_contour, claim:x.claim };
+          });
+          var pr = part && part.participation;
+          return {
+            company_id:c.company_id, name:c.name, country:c.country, industry:c.industry,
+            employees_total:pass.employees_total,
+            publicity_level:pass.publicity_level,
+            coverage_status:pass.coverage_status,
+            positive_stage:pass.positive_stage,
+            blocks:blocks,
+            achievements:{ pro:(ach.PRO||[]).map(function(a){return a.title;}),
+                           employee:(ach.EMPLOYEE||[]).map(function(a){return a.title;}) },
+            programme: pr ? Object.assign({ programme_id:pr.programme_id, window:pr.window,
+                              budget_source:(pr.budget&&pr.budget.contour)||"GENERAL" }, pr.chain) : null,
+            cycle: pr ? pr.cycle : null,
+            /* готовые результаты расчётов приходят с сервера, фронт их не считает */
+            server_results: cl && cl.results ? cl.results : null,
+            server_readiness: cl ? cl.calculator_readiness : null,
+            server_missing: cl ? cl.missing_inputs : []
+          };
+        });
+      })).then(function(companies){
+        return {
+          release: {
+            release_id: rel.release_id || "—",
+            last_update_at: rel.at || null,
+            next_update_at: rel.next_update_at || null,
+            counts: {
+              companies_in_registry: companies.length,
+              evidence_verified_today: feed.items.filter(function(i){return i.evidence_status==="VERIFIED";}).length,
+              applications_in_review: null,
+              coverage_no_verified_data: null
+            }
+          },
+          today_confirmed: feed.items.map(function(i){
+            return { evidence_id:i.evidence_id, company:i.company, block:i.block,
+                     sport_contour:i.sport_contour, positive_stage:i.positive_stage,
+                     evidence_status:i.evidence_status, claim:i.claim,
+                     source_type:i.source_type, source_url:i.source_url, source_date:i.source_date };
+          }),
+          companies: companies,
+          cases: cases.map(function(c){
+            return { case_id:c.case_id, company:c.company_id, title:c.title,
+                     did:c.did, measured:c.measured, not_claimed:c.not_claimed };
+          }),
+          almaty_2027: PROJECTION.almaty_2027
+        };
+      });
+    });
+}
+
+/* расчёт формы уходит на сервер; локальный модуль остаётся только офлайн */
+function evaluateRemote(block, ctx, chain, cycle){
+  return fetch(API_BASE + "/calculators/evaluate" + API_V, {
+    method:"POST", headers:{ "Content-Type":"application/json", "X-KCSL-API-Version":"8" },
+    body: JSON.stringify({ block:block, programme_id:ctx.programme_id, window:ctx.window,
+                           chain:chain, cycle:cycle })
+  }).then(function(r){ if(!r.ok) throw new Error("evaluate " + r.status); return r.json(); })
+    .then(function(j){ return j.data; });
+}
+
+/* ============================================================================
    3. СЛОЙ ОТОБРАЖЕНИЯ
    Ничего не вычисляет. Только читает проекцию и ответы backend-модуля.
    ========================================================================== */
 var B = KCSL_BACKEND_SURROGATE;
-var P = B.getProjection();
+var P = B.getProjection();   /* заменяется живой проекцией, если API доступен */
 var $ = function(id){ return document.getElementById(id); };
 function el(tag, cls, html){
   var n=document.createElement(tag);
@@ -1486,16 +1579,17 @@ function resCard(label, r, fmt){
   return c;
 }
 
-function runChain(){
-  var raw = {
+function chainRaw(){
+  return {
     employees_total:$("employees_total").value, eligible:$("eligible").value,
     aware:$("aware").value, first_use:$("first_use").value, regular:$("regular").value,
     annual_budget:$("annual_budget").value, currency:$("currency").value,
     period:$("period").value, budget_source:$("budgetSource").value,
     regular_rule_declared:$("regularRule").checked
   };
-  var out = B.programmeChain(currentBlock(), ctx(), raw);
+}
 
+function renderChain(out, raw){
   paintErrors(out.errors, {
     employees_total:"f_employees_total", eligible:"f_eligible", aware:"f_aware",
     first_use:"f_first_use", regular:"f_regular", annual_budget:"f_annual_budget"
@@ -1531,8 +1625,8 @@ function runChain(){
   }
 }
 
-function runCycle(){
-  var raw = {
+function cycleRaw(){
+  return {
     registered:$("registered").value, started:$("started").value, finished:$("finished").value,
     returned:$("returned").value, sustained_180_plus:$("sustained_180_plus").value,
     first_time_users:$("first_time_users").value,
@@ -1540,8 +1634,9 @@ function runCycle(){
     m1:$("m1").value, m2:$("m2").value,
     window_declared:$("windowDeclared").checked, comparable:$("comparable").checked
   };
-  var out = B.sportCycle(currentBlock(), ctx(), raw);
+}
 
+function renderCycle(out, raw){
   paintErrors(out.errors, {
     registered:"f_registered", started:"f_started", finished:"f_finished",
     returned:"f_returned", sustained_180_plus:"f_sustained",
@@ -1569,7 +1664,42 @@ function runCycle(){
   }));
 }
 
-function runAll(){ renderApplicability(); runChain(); runCycle(); }
+/* Расчёт уходит в Calculator Service. Локальный модуль включается только
+   когда страница открыта файлом или сервер недоступен, и об этом говорится
+   прямо в интерфейсе. */
+var calcSeq = 0;
+function runAll(){
+  renderApplicability();
+  var block = currentBlock(), c = ctx();
+  var chain = chainRaw(), cycle = cycleRaw();
+
+  function local(reason){
+    renderChain(B.programmeChain(block, c, chain), chain);
+    renderCycle(B.sportCycle(block, c, cycle), cycle);
+    setCalcSource(false, reason);
+  }
+  if(!API_BASE) return local("страница открыта как файл");
+
+  var seq = ++calcSeq;
+  evaluateRemote(block, c, chain, cycle).then(function(d){
+    if(seq !== calcSeq) return;               /* пришёл устаревший ответ — игнорируем */
+    renderChain({ errors:d.chain.errors, inputs:d.chain.inputs, results:d.chain.results }, chain);
+    renderCycle({ errors:d.cycle.errors, inputs:d.cycle.inputs, results:d.cycle.results }, cycle);
+    setCalcSource(true, null);
+  }).catch(function(e){
+    if(seq !== calcSeq) return;
+    local("сервис расчётов недоступен: " + e.message);
+  });
+}
+
+function setCalcSource(remote, reason){
+  var n = $("calcSource");
+  if(!n) return;
+  n.innerHTML = remote
+    ? 'Результаты вернул <b>Calculator Service</b> по <code>POST /calculators/evaluate</code>. Страница их только отображает.'
+    : 'Сервис расчётов не используется (' + esc(reason||"офлайн") + '), работает локальный модуль <code>KCSL_BACKEND_SURROGATE</code>.';
+  n.className = remote ? "note" : "note calc-local";
+}
 
 /* ---------- карточка компании ---------- */
 function companyCard(c){
@@ -1763,6 +1893,24 @@ function applyTheme(t){
   try{ localStorage.setItem("kcsl-theme", t); }catch(e){}
 }
 
+function renderAll(){
+  renderRelease(); renderKpi(); renderFeed(); renderLadder();
+  renderGrids(); renderField($("coSearch") ? $("coSearch").value : "");
+  renderCases(); renderAlmaty();
+}
+
+/* честная подпись о том, откуда данные на экране */
+function setDataSource(live, reason){
+  var n = $("dataSource");
+  if(!n) return;
+  n.textContent = live
+    ? "ЖИВАЯ ПРОЕКЦИЯ · данные получены из API KCSL (реестр → проекция → API → фронт)"
+    : "ДЕМО-ПРОЕКЦИЯ · встроенная фикстура API" + (reason ? " · " + reason : "") +
+      " · это не подтверждённые факты о реальных компаниях";
+  n.parentElement.parentElement.style.background = live ? "var(--ok-bg)" : "var(--partial-bg)";
+  n.style.color = live ? "var(--ok)" : "var(--partial)";
+}
+
 /* ============================== ЗАПУСК ============================== */
 function init(){
   try{
@@ -1774,21 +1922,33 @@ function init(){
     applyTheme(document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark");
   });
 
-  renderRelease(); renderKpi(); renderFeed(); renderLadder();
-  renderBlockSelect(); renderGrids(); renderField(""); renderCases(); renderAlmaty();
+  renderBlockSelect();
+  renderAll();
+
+  /* Живая проекция, если страница отдана сервером KCSL. Разметка та же —
+     меняется только источник данных. */
+  if(API_BASE){
+    loadFromApi().then(function(live){
+      P = live; LIVE = true;
+      renderAll();
+      setDataSource(true);
+    }).catch(function(e){
+      setDataSource(false, e.message);
+    });
+  } else {
+    setDataSource(false, "страница открыта как файл");
+  }
 
   /* калькуляторы */
   $("blockSel").addEventListener("change", runAll);
   ["progId","windowId","employees_total","eligible","aware","first_use","regular",
    "annual_budget","currency","period","budgetSource","regularRule"].forEach(function(id){
-    var n=$(id); if(n) n.addEventListener("input", runChain), n.addEventListener("change", runChain);
+    var n=$(id); if(n){ n.addEventListener("input", runAll); n.addEventListener("change", runAll); }
   });
   ["registered","started","finished","returned","sustained_180_plus","first_time_users",
    "returned_first_time_users","m1","m2","windowDeclared","comparable"].forEach(function(id){
-    var n=$(id); if(n) n.addEventListener("input", runCycle), n.addEventListener("change", runCycle);
+    var n=$(id); if(n){ n.addEventListener("input", runAll); n.addEventListener("change", runAll); }
   });
-  $("progId").addEventListener("input", runCycle);
-  $("windowId").addEventListener("input", runCycle);
 
   /* вкладки */
   function selectTab(which){

@@ -1,0 +1,6 @@
+# Рабочее состояние реестра. MASTER пересоздаётся из registry.seed.js.
+api/data/registry.json
+api/data/staging.json
+api/data/audit.json
+api/data/*.tmp
+node_modules/
