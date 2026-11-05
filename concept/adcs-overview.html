@@ -1,0 +1,427 @@
+<title>ADCS обзорный экран</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: «живая компания в движении» — сверху люди и реальная активность, ниже карта самостоятельных продуктов,
+   под ней честная аналитика, сбоку — отдельные контуры Backstage и KCSL. Палитра взята с действующего сайта ADCS
+   (#344c28 / #17231d / #fbfcf8 / #eef3ea), акценты движения, внимания и доказательности — предварительные. */
+:root{
+  --bg:#f6f8f3; --surface:#ffffff; --soft:#eef3ea; --line:#dde7d9;
+  --ink:#17231d; --muted:#56665b; --brand:#344c28;
+  --move:#1b7772; --move-soft:#e2f1ef;
+  --attn:#b9621f; --attn-soft:#fbeee2;
+  --evid:#3a4441; --evid-soft:#eceeed;
+  --hatch:rgba(52,76,40,.07);
+  --f-display:"Montserrat",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1b16; --surface:#14251e; --soft:#1a2e25; --line:#2a4033;
+  --ink:#eef3ea; --muted:#a2b3a7; --brand:#a9cc96;
+  --move:#62c4bc; --move-soft:#173a36;
+  --attn:#eba46a; --attn-soft:#3a2a1c;
+  --evid:#c9d1ce; --evid-soft:#22302b;
+  --hatch:rgba(238,243,234,.05); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1b16; --surface:#14251e; --soft:#1a2e25; --line:#2a4033;
+  --ink:#eef3ea; --muted:#a2b3a7; --brand:#a9cc96;
+  --move:#62c4bc; --move-soft:#173a36;
+  --attn:#eba46a; --attn-soft:#3a2a1c;
+  --evid:#c9d1ce; --evid-soft:#22302b;
+  --hatch:rgba(238,243,234,.05); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 56px;display:grid;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;color:var(--ink)}
+h1{font-size:clamp(30px,4.6vw,50px);line-height:1.08;font-weight:800;letter-spacing:-.01em}
+h2{font-size:clamp(20px,2.4vw,26px);font-weight:700;line-height:1.2}
+h3{font-size:16px;font-weight:700;line-height:1.25}
+p{margin:0}
+.eyebrow{font:600 11px/1.3 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+  padding-bottom:14px;border-bottom:1px solid var(--line)}
+.logo{font:800 22px/1 var(--f-display);color:var(--brand);letter-spacing:.04em}
+.logo small{display:block;font:500 11px/1.3 var(--f-body);color:var(--muted);letter-spacing:.02em;margin-top:4px}
+.draft{font-size:12px;color:var(--attn);background:var(--attn-soft);padding:6px 10px;border-radius:6px}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:32px;align-items:start}
+.hero-text{display:grid;gap:18px;align-content:start;padding-top:8px}
+.lead{font-size:17px;max-width:46ch}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:600 13px/1 var(--f-display)}
+.chain span{padding:8px 11px;border-radius:999px;background:var(--soft);color:var(--brand)}
+.chain i{font-style:normal;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);max-width:56ch}
+
+.photos{display:grid;grid-template-columns:1.4fr 1fr;grid-template-rows:auto auto;gap:10px}
+.ph{position:relative;border-radius:10px;overflow:hidden;min-height:150px;
+  background:repeating-linear-gradient(135deg,var(--hatch) 0 10px,transparent 10px 20px),var(--soft);
+  border:1px solid var(--line);display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
+.ph.big{grid-row:span 2;min-height:320px}
+.ph b{font:700 13px/1.3 var(--f-display);color:var(--ink)}
+.ph em{font-style:normal;font-size:12px;color:var(--muted);line-height:1.4}
+.ph .tag{position:absolute;top:10px;left:10px;font:600 10px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);background:var(--surface);padding:5px 7px;border-radius:4px}
+.ph.family{border-style:dashed;opacity:.85}
+.ph.family .tag{color:var(--attn)}
+
+/* this week */
+.week{display:grid;gap:14px}
+.week-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:end}
+.acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.act{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;align-content:start}
+.act .when{font-size:12px;color:var(--move);font-weight:600}
+.act .fact{font-size:13px}
+.meter{height:6px;border-radius:3px;background:var(--soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--move)}
+.act .den{font-size:12px;color:var(--muted)}
+
+/* product map */
+.map{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px}
+.zone{display:grid;gap:12px;align-content:start}
+.zone-label{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;align-content:start}
+.card p{font-size:13.5px}
+.card .who{font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 10.5px/1 var(--f-body);letter-spacing:.04em;padding:5px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.pub{color:var(--move);border-color:currentColor}
+.chip.cli{color:var(--brand);border-color:currentColor}
+.chip.int{color:var(--evid);border-color:currentColor}
+.chip.ind{color:var(--evid);background:var(--evid-soft);border-color:transparent}
+.chip.paid{color:var(--attn);border-color:currentColor}
+.chip.st{border-style:dashed}
+.chip.live{color:var(--brand);background:var(--soft);border-color:transparent}
+
+.cabinet{background:var(--soft);border-radius:12px;padding:18px;display:grid;gap:14px}
+.cab-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:start}
+.menu{display:flex;flex-wrap:wrap;gap:6px}
+.menu span{font-size:12.5px;padding:7px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--line)}
+.menu span.off{background:transparent;border-style:dashed;color:var(--muted)}
+.menu span.on{border-color:var(--brand);color:var(--brand);font-weight:600}
+.league{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;align-items:center}
+.track{position:relative;height:96px;border-radius:48px;border:2px solid var(--move);opacity:.95}
+.track::after{content:"";position:absolute;inset:14px;border-radius:34px;border:1px dashed var(--line)}
+.runner,.shadow{position:absolute;width:14px;height:14px;border-radius:50%;top:-8px}
+.runner{left:62%;background:var(--move)}
+.shadow{left:48%;background:transparent;border:2px dashed var(--muted)}
+.track-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.track-legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+.side{display:grid;gap:12px;align-content:start}
+.side .card{border-left-width:1px}
+.side .card.bs{background:var(--evid-soft);border-color:transparent}
+.link-note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.brain{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:13px}
+
+/* honest analytics */
+.honest{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;align-content:start}
+.wave{display:grid;gap:6px}
+.wave-row{display:flex;justify-content:space-between;font-size:13px;gap:8px;flex-wrap:wrap}
+.stack{display:flex;height:30px;border-radius:6px;overflow:hidden;gap:2px}
+.stack div{display:flex;align-items:center;padding-inline:8px;font:600 12px/1 var(--f-body);white-space:nowrap;overflow:hidden;min-width:0}
+.s-same{background:var(--move);color:var(--surface)}
+.s-left{background:var(--evid-soft);color:var(--ink)}
+.s-quiet{background:var(--soft);color:var(--ink)}
+.s-new{background:var(--attn-soft);color:var(--ink)}
+.keys{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.keys b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.level{display:inline-flex;gap:6px;align-items:center;font:600 11px/1 var(--f-body);padding:6px 8px;border-radius:4px;background:var(--evid-soft);color:var(--evid)}
+.compare{display:grid;gap:10px}
+.say{border-radius:8px;padding:12px;font-size:13.5px;display:grid;gap:4px}
+.say.no{background:var(--attn-soft)}
+.say.yes{background:var(--move-soft)}
+.say small{font:600 10.5px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* modes */
+.modes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.mode{border-top:3px solid var(--line);padding-top:10px;display:grid;gap:4px;font-size:13px}
+.mode.m1{border-color:var(--move)} .mode.m2{border-color:var(--brand)} .mode.m3{border-color:var(--evid)}
+.mode.m4{border-top-style:dashed;border-color:var(--muted)} .mode.m5{border-color:var(--evid);border-top-style:double;border-top-width:4px}
+
+.check{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;margin:0;padding:0;list-style:none;font-size:13.5px}
+.check li{display:flex;gap:10px;align-items:baseline}
+.check li::before{content:"";flex:none;width:12px;height:12px;border:1.5px solid var(--brand);border-radius:3px;transform:translateY(1px)}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+
+@media (max-width:980px){
+  .hero,.map,.honest{grid-template-columns:minmax(0,1fr)}
+  .acts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .side{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  .acts,.cards,.side,.check,.league{grid-template-columns:minmax(0,1fr)}
+  .modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .photos{grid-template-columns:minmax(0,1fr)}
+  .ph.big{grid-row:auto;min-height:220px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .runner{animation:run 6s ease-in-out infinite alternate}
+  @keyframes run{from{left:56%}to{left:66%}}
+}
+</style>
+
+<div class="wrap">
+
+  <header class="bar">
+    <div class="logo">ADCS<small>Сердце корпоративной спортивной жизни компании</small></div>
+    <div class="draft">Концепт обзорного экрана v0.1 · все числа демонстрационные · статусы продуктов сверяются</div>
+  </header>
+
+  <!-- 1. Люди и движение -->
+  <section class="hero" aria-labelledby="h-hero">
+    <div class="hero-text">
+      <p class="eyebrow">Живая компания в движении</p>
+      <h1 id="h-hero">Спорт как обычная часть рабочего дня, а не событие для немногих</h1>
+      <p class="lead">ADCS помогает компании увидеть, кто участвует и кто остаётся в стороне, расширить доступные форматы активности и честно проверить, что изменилось после принятых решений.</p>
+      <div class="chain" aria-label="Области работы ADCS">
+        <span>Люди</span><i>→</i><span>движение</span><i>→</i><span>участие</span><i>→</i><span>регулярность</span><i>→</i><span>изменения</span><i>→</i><span>решения</span>
+      </div>
+      <p class="note">Цепочка показывает области работы ADCS. Это не доказанная причинная модель: рост участия сам по себе не означает улучшения самочувствия.</p>
+    </div>
+    <div class="photos" aria-label="Фото-слоты для реальных снимков">
+      <div class="ph big"><span class="tag">Фото-слот 1 · главный</span>
+        <b>Короткая гимнастика в офисе, 11:00</b>
+        <em>6–8 сотрудников разного возраста и подготовки, рабочая одежда, естественные эмоции. Без постановки и фитнес-моделей.</em></div>
+      <div class="ph"><span class="tag">Фото-слот 2</span>
+        <b>Небольшая команда после тренировки</b>
+        <em>Производство или склад, с соблюдением техники безопасности.</em></div>
+      <div class="ph"><span class="tag">Фото-слот 3</span>
+        <b>Прогулка-челлендж в обеденный перерыв</b>
+        <em>Двое-трое коллег, город, движение в кадре.</em></div>
+    </div>
+  </section>
+
+  <!-- 2. Реальная спортивная жизнь -->
+  <section class="week" aria-labelledby="h-week">
+    <div class="week-head">
+      <div><p class="eyebrow">Реальные программы · пример компании на 3 000 сотрудников</p>
+        <h2 id="h-week">Что происходит в компании на этой неделе</h2></div>
+      <p class="note">Запись не равна участию, а разовое посещение не равно регулярности. Под каждым процентом виден знаменатель.</p>
+    </div>
+    <div class="acts">
+      <article class="act">
+        <span class="when">Пн–Пт · 11:00 · 10 минут</span>
+        <h3>Производственная гимнастика</h3>
+        <p class="fact num">Пришли 214 из 600 человек целевой группы</p>
+        <div class="meter" aria-hidden="true"><i style="width:36%"></i></div>
+        <p class="den num">36% целевой группы (цех №2 и офис)</p>
+      </article>
+      <article class="act">
+        <span class="when">Вт, Чт · 18:30</span>
+        <h3>Беговой клуб с тренером</h3>
+        <p class="fact num">Записались 52, пришли 38</p>
+        <div class="meter" aria-hidden="true"><i style="width:73%"></i></div>
+        <p class="den num">73% записавшихся · 1,3% всей компании</p>
+      </article>
+      <article class="act">
+        <span class="when">Среда · 19:00</span>
+        <h3>Волейбол, смешанные команды</h3>
+        <p class="fact num">4 команды, 31 участник</p>
+        <div class="meter" aria-hidden="true"><i style="width:52%"></i></div>
+        <p class="den num">16 из 31 ходят регулярно, 3+ раза за месяц</p>
+      </article>
+      <article class="act">
+        <span class="when">Весь месяц</span>
+        <h3>Прогулка-челлендж</h3>
+        <p class="fact num">Участвуют 412 сотрудников</p>
+        <div class="meter" aria-hidden="true"><i style="width:14%"></i></div>
+        <p class="den num">412 из 3 000 · 14% общей численности</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3. Карта продуктов -->
+  <section class="zone" aria-labelledby="h-map">
+    <div class="zone-label">
+      <h2 id="h-map">Самостоятельные продукты и рабочее пространство компании</h2>
+      <p class="muted">Каждый продукт решает свою задачу. Обязательного маршрута между ними нет.</p>
+    </div>
+
+    <div class="map">
+      <div class="zone">
+        <div class="cards">
+          <article class="card">
+            <h3>Публичный сайт ADCS</h3>
+            <p>Знакомство с экосистемой и её возможностями.</p>
+            <p class="who">Вход: любой посетитель</p>
+            <div class="chips"><span class="chip pub">Публичный</span><span class="chip live">Действует</span></div>
+          </article>
+          <article class="card">
+            <h3>Pulse</h3>
+            <p>Услышать человека: быстрый личный срез состояния и восприятия.</p>
+            <p class="who">Вход: сотрудник по приглашению</p>
+            <div class="chips"><span class="chip cli">Клиентский</span><span class="chip st">Статус сверяется</span></div>
+          </article>
+          <article class="card">
+            <h3>Три взгляда — одна компания</h3>
+            <p>Совпадения и расхождения: руководство, HR/координатор, сотрудники.</p>
+            <p class="who">Вход: три группы, разные выборки</p>
+            <div class="chips"><span class="chip cli">Клиентский</span><span class="chip st">Статус сверяется</span></div>
+          </article>
+          <article class="card">
+            <h3>Замкнутый цикл</h3>
+            <p>Глубокая программа: диагностика, действия, повторное измерение, проверка изменений.</p>
+            <p class="who">Отдельный договор. Координатор видит только выданные задания.</p>
+            <div class="chips"><span class="chip paid">Отдельный платный продукт</span><span class="chip st">Статус сверяется</span></div>
+          </article>
+          <article class="card">
+            <h3>Живой Мир</h3>
+            <p>Добровольная игра: миссии, команды, амбассадоры, совместное движение.</p>
+            <p class="who">Свой прямой вход сотрудника, без Кабинета и Лиги</p>
+            <div class="chips"><span class="chip cli">Клиентский</span><span class="chip st">Статус сверяется</span></div>
+          </article>
+          <article class="card">
+            <h3>Игры 2027</h3>
+            <p>Реальное спортивное событие для компаний и их команд.</p>
+            <p class="who">Вход: лендинг, заявка компании и участника</p>
+            <div class="chips"><span class="chip pub">Публичный + клиентский</span><span class="chip st">Статус сверяется</span></div>
+          </article>
+        </div>
+
+        <div class="cabinet" aria-labelledby="h-cab">
+          <div class="cab-top">
+            <div><p class="eyebrow">Рабочее пространство подключённой компании</p>
+              <h3 id="h-cab" style="font-size:19px">Корпоративный Кабинет</h3></div>
+            <div class="chips"><span class="chip cli">Клиентский · по ролям</span><span class="chip st">Статус сверяется</span></div>
+          </div>
+          <nav class="menu" aria-label="Исходное меню Кабинета (база для сверки)">
+            <span class="on">Обзор</span><span>Pulse</span><span>Три взгляда</span><span>Отчёт</span><span class="on">Моя Лига</span>
+            <span class="off" title="Подключается отдельным договором">Замкнутый цикл · не подключён</span>
+            <span>Игры</span><span>Документы</span><span>Команда</span><span>Настройки</span>
+          </nav>
+          <div class="league">
+            <div>
+              <p class="eyebrow">Лига · внутри Кабинета</p>
+              <h3 style="margin:4px 0 6px">Осенний сезон компании, неделя 7 из 12</h3>
+              <p style="font-size:13.5px">Стадион, сезон, команды, «Бегун компании» и «Тень» прошлых результатов. Восемь исходных калькуляторов сохраняют свои смыслы; их компоновка проектируется отдельно.</p>
+            </div>
+            <div>
+              <div class="track" role="img" aria-label="Стадион: бегун компании впереди своей тени прошлого сезона">
+                <span class="shadow"></span><span class="runner"></span>
+              </div>
+              <div class="track-legend"><span><b style="background:var(--move)"></b>Бегун компании, этот сезон</span><span><b style="border:2px dashed var(--muted)"></b>Тень, прошлый сезон</span></div>
+            </div>
+          </div>
+          <p class="note">Семейные и детские программы в Кабинете не активны. Они подключаются только по отдельному запросу и согласованию.</p>
+        </div>
+
+        <div class="brain">
+          <span><b>Brain</b> · расчёты и интерпретация по утверждённой методологии. Виден через происхождение показателя и пометку «как рассчитано», а не как отдельный обязательный шаг.</span>
+          <span class="chip int">Внутренний механизм</span>
+        </div>
+      </div>
+
+      <aside class="side" aria-label="Отдельные контуры">
+        <article class="card">
+          <p class="eyebrow">Равноправная часть ADCS</p>
+          <h3>Реальные программы</h3>
+          <p>Корпоративный тренер, производственная гимнастика, короткие занятия, регулярные тренировки, мероприятия.</p>
+          <div class="chips"><span class="chip cli">Клиентский</span><span class="chip st">Реестр сверяется</span></div>
+        </article>
+        <article class="card bs">
+          <p class="eyebrow">Закрытый операторский контур</p>
+          <h3>Backstage</h3>
+          <p>Единый пульт: компании, роли, доступы, подключения, задания, заявки, версии. Внутри тоже разграничение прав.</p>
+          <div class="chips"><span class="chip int">Внутренний</span></div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">ADCS ↔ KCSL</p>
+          <h3>KCSL</h3>
+          <p>Независимые исследования и проверка. Результат ADCS не становится подтверждением KCSL автоматически.</p>
+          <div class="chips"><span class="chip ind">Независимый</span></div>
+        </article>
+        <p class="link-note">Связи между продуктами показаны как возможные, а не обязательные. Закрытые авторские компоненты в этой версии экрана не отображаются.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 4. Честная аналитика -->
+  <section class="zone" aria-labelledby="h-honest">
+    <div class="zone-label">
+      <h2 id="h-honest">Как ADCS показывает изменения</h2>
+      <p class="muted">Пример из «Замкнутого цикла»: кого сравниваем, прежде чем говорить, что изменилось.</p>
+    </div>
+    <div class="honest">
+      <div class="panel">
+        <div class="wave">
+          <div class="wave-row"><b>Первая волна</b><span class="num muted">567 ответили</span></div>
+          <div class="stack" role="img" aria-label="Первая волна: 323 ответили повторно, 156 остались, но не ответили, 88 ушли из компании" style="width:100%">
+            <div class="s-same num" style="flex:323">323</div>
+            <div class="s-quiet num" style="flex:156">156</div>
+            <div class="s-left num" style="flex:88">88</div>
+          </div>
+          <p class="num muted" style="font-size:12px">88 + 156 + 323 = 567</p>
+        </div>
+        <div class="wave">
+          <div class="wave-row"><b>Вторая волна</b><span class="num muted">422 ответили</span></div>
+          <div class="stack" role="img" aria-label="Вторая волна: 323 ответили повторно, 99 новых участников" style="width:74.4%">
+            <div class="s-same num" style="flex:323">323</div>
+            <div class="s-new num" style="flex:99">99</div>
+          </div>
+          <p class="num muted" style="font-size:12px">323 + 99 = 422 · ширина полос в одном масштабе</p>
+        </div>
+        <div class="keys">
+          <span><b style="background:var(--move)"></b>Ответили в обеих волнах: сопоставимая группа</span>
+          <span><b style="background:var(--soft);outline:1px solid var(--line)"></b>Остались, не ответили повторно</span>
+          <span><b style="background:var(--evid-soft);outline:1px solid var(--line)"></b>Ушли из компании</span>
+          <span><b style="background:var(--attn-soft);outline:1px solid var(--line)"></b>Новые участники измерения</span>
+        </div>
+        <p class="note">Исходные 567 участников первой волны взяты из демонстрационной модели; остальные числа условны.</p>
+      </div>
+
+      <div class="panel compare">
+        <span class="level">◼ Уровень вывода: описательный результат</span>
+        <div class="say no"><small>Так не показываем</small><span>«Самочувствие улучшилось на 12%»</span></div>
+        <div class="say yes"><small>Так показываем</small>
+          <span class="num">323 сотрудника ответили в обеих волнах. В этой группе зафиксировано изменение выбранного показателя. Метод расчёта и ограничения указаны в отчёте.</span></div>
+        <p class="note">Новые 99 участников не входят в сравнение «одних и тех же людей». Связь с программой показывается как наблюдаемая, а не как доказанная причина.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Режимы доступа -->
+  <section class="zone" aria-labelledby="h-modes">
+    <h2 id="h-modes">Кто что видит</h2>
+    <div class="modes">
+      <div class="mode m1"><b>Публичный</b><span class="muted">Описание продуктов, открытые функции, демо</span></div>
+      <div class="mode m2"><b>Клиентский</b><span class="muted">Подключённые продукты и данные своей компании по роли</span></div>
+      <div class="mode m3"><b>Внутренний</b><span class="muted">Операционные инструменты команды ADCS</span></div>
+      <div class="mode m4"><b>Закрытый авторский</b><span class="muted">Не раскрывается во внешних материалах</span></div>
+      <div class="mode m5"><b>Независимый</b><span class="muted">По правилам KCSL</span></div>
+    </div>
+  </section>
+
+  <!-- 6. Самопроверка экрана -->
+  <section class="zone" aria-labelledby="h-check">
+    <h2 id="h-check">Проверка этого экрана перед согласованием</h2>
+    <ul class="check">
+      <li>Сначала видны люди и реальная активность, а не графики</li>
+      <li>Все продукты на месте и не стали подразделами друг друга</li>
+      <li>Кабинет показан рабочим пространством компании, а не центром всей ADCS</li>
+      <li>Лига внутри Кабинета и ощущается сезоном, а не таблицей KPI</li>
+      <li>«Живой Мир» имеет свой вход и не слит с Лигой</li>
+      <li>Backstage и KCSL вынесены в отдельные контуры</li>
+      <li>У каждого процента виден знаменатель</li>
+      <li>Семья, дети и закрытые компоненты не включены по умолчанию</li>
+      <li>Ни один продукт не помечен как работающий без подтверждения</li>
+      <li>Связь не выдаётся за причинность</li>
+    </ul>
+  </section>
+
+  <footer>ADCS · концепт обзорного экрана по Master Moodboard 1.0 · фото-слоты заменить реальными снимками компаний-клиентов (с согласием) · цвета взяты с действующего сайта и требуют сверки с брендбордом.</footer>
+</div>
